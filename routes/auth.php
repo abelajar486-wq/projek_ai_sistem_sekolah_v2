@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Auth\DemoLoginController;
 use App\Http\Controllers\Auth\VerifyEmailController;
 use App\Livewire\Actions\Logout;
 use Illuminate\Http\Request;
@@ -7,6 +8,10 @@ use Illuminate\Support\Facades\Route;
 use Livewire\Volt\Volt;
 
 Route::middleware('guest')->group(function () {
+    Route::post('demo-login/{role}', DemoLoginController::class)
+        ->middleware('throttle:10,1')
+        ->name('demo.login');
+
     Volt::route('register', 'pages.auth.register')
         ->name('register');
 

@@ -79,6 +79,30 @@ new #[Layout('layouts.guest')] class extends Component
         </div>
     </form>
 
+    @if (config('demo.enabled'))
+        <div class="mt-6 pt-4 border-t-2 border-dashed border-concrete-300">
+            <div class="flex items-center gap-2">
+                <span class="tag-street tag-tilt-right bg-acid-400 text-asphalt-950">Mode Demo</span>
+                <span class="text-[11px] text-concrete-600 leading-tight">Coba tanpa daftar &mdash; masuk instan sebagai:</span>
+            </div>
+
+            <div class="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                @foreach (config('demo.accounts') as $role => $account)
+                    <form method="POST" action="{{ route('demo.login', $role) }}">
+                        @csrf
+                        <button
+                            type="submit"
+                            class="btn-street {{ $role === 'guru' ? 'btn-spray' : 'btn-asphalt' }} w-full px-4 py-2.5 rounded-lg text-left"
+                        >
+                            <span class="font-display text-xs uppercase tracking-[0.12em]">{{ $account['label'] }}</span>
+                            <span class="block text-[10px] font-sans font-normal normal-case tracking-normal opacity-80">{{ $account['description'] }}</span>
+                        </button>
+                    </form>
+                @endforeach
+            </div>
+        </div>
+    @endif
+
     <div class="mt-6 pt-4 border-t-2 border-dashed border-concrete-300 flex items-center justify-between gap-3">
         <span class="text-xs text-concrete-600">Belum punya akun sekolah?</span>
         <a class="text-xs font-display uppercase tracking-widest street-link underline decoration-2 underline-offset-2" href="{{ route('register') }}" wire:navigate>
