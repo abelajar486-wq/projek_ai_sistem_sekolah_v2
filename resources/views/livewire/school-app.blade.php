@@ -392,6 +392,11 @@
                                         <span class="text-xs text-slate-400">
                                             Batas Waktu: {{ $assign->due_date ? $assign->due_date->format('d M Y') : 'Tanpa Batas' }}
                                         </span>
+                                        @if($assign->isOverdue())
+                                            <span class="text-[10px] font-semibold bg-rose-50 text-rose-700 px-2 py-0.5 rounded border border-rose-200">
+                                                Lewat Tenggat
+                                            </span>
+                                        @endif
                                     </div>
                                     <h3 class="text-sm font-bold text-slate-800">{{ $assign->title }}</h3>
                                     <p class="text-xs text-slate-600 mt-1 leading-relaxed">{{ $assign->instructions }}</p>
@@ -433,6 +438,15 @@
                                             >
                                                 Pratinjau Soal & Kunci
                                             </button>
+                                            @if($assign->isOverdue())
+                                                <button
+                                                    wire:click="deleteAssignment({{ $assign->id }})"
+                                                    wire:confirm="Hapus tugas '{{ $assign->title }}' yang telah lewat tenggat? Jawaban siswa yang terkumpul juga akan terhapus dan tindakan ini tidak dapat dibatalkan."
+                                                    class="text-xs font-medium text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 px-3 py-1.5 rounded-lg transition"
+                                                >
+                                                    Hapus
+                                                </button>
+                                            @endif
                                         </div>
                                     @endif
                                 </div>
@@ -746,13 +760,11 @@
                             <button
                                 wire:click="generateAndPublishAssignment"
                                 wire:loading.attr="disabled"
-                                class="btn-street w-full bg-spray-600 text-white font-semibold text-xs sm:text-sm py-2.5 px-4 flex items-center justify-center gap-2 disabled:opacity-50"
+                                class="btn-street w-full bg-spray-600 text-white font-semibold text-xs sm:text-sm py-2.5 px-4 inline-flex items-center justify-center gap-2 whitespace-nowrap disabled:opacity-50"
                             >
-                                <span wire:loading.remove wire:target="generateAndPublishAssignment">Susun Soal via AI & Terbitkan ke Kelas</span>
-                                <span wire:loading wire:target="generateAndPublishAssignment" class="flex items-center gap-2">
-                                    <svg class="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>
-                                    AI sedang menyusun dan menerbitkan soal...
-                                </span>
+                                <svg wire:loading wire:target="generateAndPublishAssignment" class="animate-spin h-4 w-4 text-white shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>
+                                <span wire:loading.remove wire:target="generateAndPublishAssignment">Buat & Terbitkan Soal AI</span>
+                                <span wire:loading wire:target="generateAndPublishAssignment">Menyusun & menerbitkan...</span>
                             </button>
                         </div>
                     </div>
@@ -800,7 +812,7 @@
                                 <div class="py-16 text-center text-slate-400">
                                     <div class="text-xs font-medium">Belum ada pratinjau soal yang dibuat.</div>
                                     <p class="text-[11px] text-slate-400 mt-1 max-w-xs mx-auto">
-                                        Masukkan teks materi pada form di sebelah kiri lalu klik tombol "Susun Soal via AI".
+                                        Masukkan teks materi pada form di sebelah kiri lalu klik tombol "Buat & Terbitkan Soal AI".
                                     </p>
                                 </div>
                             @endif
@@ -883,19 +895,50 @@
                     @endif
                 </div>
 
-                <div class="p-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between">
-                    <button wire:click="closeAssignmentModal" class="btn-street bg-white text-asphalt-800 text-xs font-medium px-4 py-2">
-                        Batal
-                    </button>
-
-                    @if($currentUser->role === 'murid')
-                        <button
-                            wire:click="submitAssignment"
-                            class="btn-street bg-spray-600 text-white font-semibold text-xs px-5 py-2"
+                <div class="p-4 bg-slate-50 border-t border-slate-200 flex flex-wrap items-center justify-between gap-2">
+                    <div class="flex items-center gap-2">
+                        <span class="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+                            Unduh{{ $currentUser->role === 'guru' ? ' (Soal + Kunci)' : ' Soal' }}:
+                        </span>
+                        <a
+                            href="{{ route('assignments.download', ['assignment' => $activeAssignment->id, 'format' => 'word']) }}"
+                            class="btn-street bg-white text-asphalt-900 text-xs font-semibold px-3 py-2"
+                            title="Unduh sebagai dokumen Word (.docx)"
                         >
-                            Kirim Jawaban Tugas
+                            Word (.docx)
+                        </a>
+                        <a
+                            href="{{ route('assignments.download', ['assignment' => $activeAssignment->id, 'format' => 'pdf']) }}"
+                            class="btn-street bg-white text-asphalt-900 text-xs font-semibold px-3 py-2"
+                            title="Unduh sebagai dokumen PDF"
+                        >
+                            PDF
+                        </a>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        @if($currentUser->role === 'guru' && $activeAssignment->isOverdue())
+                            <button
+                                wire:click="deleteAssignment({{ $activeAssignment->id }})"
+                                wire:confirm="Hapus tugas '{{ $activeAssignment->title }}' yang telah lewat tenggat? Jawaban siswa yang terkumpul juga akan terhapus."
+                                class="btn-street bg-rose-50 text-rose-700 text-xs font-medium px-4 py-2"
+                            >
+                                Hapus Tugas
+                            </button>
+                        @endif
+
+                        <button wire:click="closeAssignmentModal" class="btn-street bg-white text-asphalt-800 text-xs font-medium px-4 py-2">
+                            Batal
                         </button>
-                    @endif
+
+                        @if($currentUser->role === 'murid')
+                            <button
+                                wire:click="submitAssignment"
+                                class="btn-street bg-spray-600 text-white font-semibold text-xs px-5 py-2"
+                            >
+                                Kirim Jawaban Tugas
+                            </button>
+                        @endif
+                    </div>
                 </div>
             </div>
         </div>
@@ -917,16 +960,35 @@
                 <div class="p-6 overflow-y-auto flex-1 prose prose-sm prose-slate max-w-none text-xs leading-relaxed">
                     {!! Str::markdown($activeMaterial->content) !!}
                 </div>
-                <div class="p-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between">
-                    <button wire:click="closeMaterial" class="btn-street bg-white text-asphalt-800 text-xs font-medium px-4 py-2">
-                        Selesai Membaca
-                    </button>
-                    <button
-                        wire:click="openChatWithContext('Materi: {{ $activeMaterial->title }}', '{{ addslashes($activeMaterial->content) }}')"
-                        class="btn-street bg-spray-600 text-white font-semibold text-xs px-4 py-2"
-                    >
-                        Tanya AI Terkait Materi Ini
-                    </button>
+                <div class="p-4 bg-slate-50 border-t border-slate-200 flex flex-wrap items-center justify-between gap-2">
+                    <div class="flex items-center gap-2">
+                        <span class="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Unduh Materi:</span>
+                        <a
+                            href="{{ route('materials.download', ['material' => $activeMaterial->id, 'format' => 'word']) }}"
+                            class="btn-street bg-white text-asphalt-900 text-xs font-semibold px-3 py-2"
+                            title="Unduh sebagai dokumen Word (.docx)"
+                        >
+                            Word (.docx)
+                        </a>
+                        <a
+                            href="{{ route('materials.download', ['material' => $activeMaterial->id, 'format' => 'pdf']) }}"
+                            class="btn-street bg-white text-asphalt-900 text-xs font-semibold px-3 py-2"
+                            title="Unduh sebagai dokumen PDF"
+                        >
+                            PDF
+                        </a>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button wire:click="closeMaterial" class="btn-street bg-white text-asphalt-800 text-xs font-medium px-4 py-2">
+                            Selesai Membaca
+                        </button>
+                        <button
+                            wire:click="openChatWithContext('Materi: {{ $activeMaterial->title }}', '{{ addslashes($activeMaterial->content) }}')"
+                            class="btn-street bg-spray-600 text-white font-semibold text-xs px-4 py-2"
+                        >
+                            Tanya AI Terkait Materi Ini
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1102,7 +1164,7 @@
             </div>
 
             <!-- Chat Messages Stream -->
-            <div class="flex-1 overflow-y-auto p-4 space-y-3 bg-slate-50/50 text-xs" id="chat-messages">
+            <div class="flex-1 overflow-y-auto p-4 space-y-3 bg-slate-50/50 text-xs" id="chat-messages" data-autoscroll>
                 @foreach($chatMessages as $msg)
                     <div class="flex {{ $msg['role'] === 'user' ? 'justify-end' : 'justify-start' }}">
                         <div class="max-w-[85%] p-3 rounded-xl {{ $msg['role'] === 'user' ? 'bg-spray-600 text-white rounded-br-none border-2 border-asphalt-950 shadow-sticker-sm' : 'bg-white text-asphalt-900 rounded-bl-none border-2 border-asphalt-950 shadow-sticker-sm' }}">

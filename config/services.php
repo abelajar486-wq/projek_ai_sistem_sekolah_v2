@@ -38,5 +38,6 @@ return [
     'groq' => [
         'api_key' => env('GROQ_API_KEY'),
         'model' => env('GROQ_MODEL', 'qwen/qwen3.8-27b'),
+        'max_tokens' => (int) env('GROQ_MAX_TOKENS', 900),
     ],
 ];

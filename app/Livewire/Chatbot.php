@@ -2,8 +2,7 @@
 
 namespace App\Livewire;
 
-use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Log;
+use App\Services\GroqAiService;
 use Livewire\Component;
 
 class Chatbot extends Component
@@ -12,7 +11,7 @@ class Chatbot extends Component
 
     public string $input = '';
 
-    public function sendMessage()
+    public function sendMessage(GroqAiService $aiService)
     {
         if (empty(trim($this->input))) {
             return;
@@ -26,38 +25,14 @@ class Chatbot extends Component
 
         $this->input = ''; // Kosongkan input field
 
-        try {
-            // 2. Kirim seluruh riwayat obrolan ke Groq
-            $response = Http::withToken(config('services.groq.api_key'))
-                ->withoutVerifying() // <--- Pastikan baris ini ditambahkan di sini
-                ->timeout(30)
-                ->post('https://api.groq.com/openai/v1/chat/completions', [
-                    'model' => config('services.groq.model', 'qwen/qwen3.8-27b'),
-                    'messages' => $this->messages,
-                ]);
+        // 2. Panggil AI Tutor (EduBot) yang sadar kurikulum SD-SMA
+        $reply = $aiService->chatWithAiTutor($this->messages);
 
-            if ($response->successful()) {
-                $reply = $response->json('choices.0.message.content');
-
-                // 3. Simpan balasan AI ke dalam memori
-                $this->messages[] = [
-                    'role' => 'assistant',
-                    'content' => $reply,
-                ];
-            } else {
-                Log::error('Groq API Error', ['response' => $response->body()]);
-                $this->messages[] = [
-                    'role' => 'assistant',
-                    'content' => 'Maaf, terjadi kesalahan dari server Groq.',
-                ];
-            }
-        } catch (\Exception $e) {
-            Log::error('Chatbot Exception', ['error' => $e->getMessage()]);
-            $this->messages[] = [
-                'role' => 'assistant',
-                'content' => 'Sistem sedang sibuk atau offline.',
-            ];
-        }
+        // 3. Simpan balasan AI ke dalam memori
+        $this->messages[] = [
+            'role' => 'assistant',
+            'content' => $reply,
+        ];
     }
 
     public function render()

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -51,5 +52,13 @@ class Assignment extends Model
     public function studentSubmission(int $studentId)
     {
         return $this->submissions()->where('student_id', $studentId)->first();
+    }
+
+    /**
+     * Apakah tugas sudah melewati tanggal tenggat (sebelum hari ini)?
+     */
+    public function isOverdue(): bool
+    {
+        return $this->due_date !== null && $this->due_date->isBefore(Carbon::today());
     }
 }

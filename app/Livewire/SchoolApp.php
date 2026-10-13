@@ -394,6 +394,39 @@ class SchoolApp extends Component
         $this->notify('Tugas berhasil dikirim ke guru. Anda dapat melihat status pengumpulan pada daftar tugas.', 'success');
     }
 
+    /**
+     * Hapus tugas yang sudah melewati tanggal tenggat (khusus guru).
+     */
+    public function deleteAssignment(int $assignmentId)
+    {
+        if (! $this->authorizeGuru()) {
+            return;
+        }
+
+        $assignment = Assignment::find($assignmentId);
+
+        if (! $assignment) {
+            $this->notify('Tugas tidak ditemukan.', 'error');
+
+            return;
+        }
+
+        if (! $assignment->isOverdue()) {
+            $this->notify('Hanya tugas yang sudah melewati tanggal tenggat yang dapat dihapus.', 'error');
+
+            return;
+        }
+
+        $assignment->delete();
+
+        if ($this->activeAssignmentId === $assignmentId) {
+            $this->showAssignmentModal = false;
+            $this->activeAssignmentId = null;
+        }
+
+        $this->notify('Tugas yang telah lewat tenggat berhasil dihapus.', 'success');
+    }
+
     // ==================== PENILAIAN GURU ====================
 
     public function openGrading(int $submissionId)

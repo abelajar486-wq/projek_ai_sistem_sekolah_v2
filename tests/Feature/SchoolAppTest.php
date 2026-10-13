@@ -141,3 +141,64 @@ test('murid cannot create material or ai assignment', function () {
 
     expect(Material::where('title', 'Materi Ilegal')->exists())->toBeFalse();
 });
+
+test('guru dapat menghapus tugas yang sudah lewat tenggat', function () {
+    $this->actingAs($this->guru);
+
+    $overdue = Assignment::create([
+        'classroom_id' => $this->classroom->id,
+        'teacher_id' => $this->guru->id,
+        'title' => 'Tugas Lewat Tenggat',
+        'topic' => 'Umum',
+        'questions_content' => '1. Bagaimana cara menghitung luas?',
+        'due_date' => Carbon::today()->subDays(3)->toDateString(),
+        'status' => 'published',
+    ]);
+
+    Livewire::test(SchoolApp::class)
+        ->call('startAssignment', $overdue->id)
+        ->call('deleteAssignment', $overdue->id)
+        ->assertSet('flashType', 'success');
+
+    expect(Assignment::find($overdue->id))->toBeNull();
+});
+
+test('guru tidak dapat menghapus tugas yang belum lewat tenggat', function () {
+    $this->actingAs($this->guru);
+
+    $aktif = Assignment::create([
+        'classroom_id' => $this->classroom->id,
+        'teacher_id' => $this->guru->id,
+        'title' => 'Tugas Masih Aktif',
+        'topic' => 'Umum',
+        'questions_content' => '1. Jelaskan proses fotosintesis.',
+        'due_date' => Carbon::today()->addDays(3)->toDateString(),
+        'status' => 'published',
+    ]);
+
+    Livewire::test(SchoolApp::class)
+        ->call('deleteAssignment', $aktif->id)
+        ->assertSet('flashType', 'error');
+
+    expect(Assignment::find($aktif->id))->not->toBeNull();
+});
+
+test('murid tidak dapat menghapus tugas', function () {
+    $this->actingAs($this->murid);
+
+    $overdue = Assignment::create([
+        'classroom_id' => $this->classroom->id,
+        'teacher_id' => $this->guru->id,
+        'title' => 'Tugas Lewat Tenggat',
+        'topic' => 'Umum',
+        'questions_content' => '1. Gambarkan struktur sel.',
+        'due_date' => Carbon::today()->subDays(3)->toDateString(),
+        'status' => 'published',
+    ]);
+
+    Livewire::test(SchoolApp::class)
+        ->call('deleteAssignment', $overdue->id)
+        ->assertSet('flashType', 'error');
+
+    expect(Assignment::find($overdue->id))->not->toBeNull();
+});

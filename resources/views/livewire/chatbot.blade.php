@@ -9,7 +9,7 @@
     </div>
 
     <!-- Area Chat -->
-    <div class="flex-1 overflow-y-auto p-4 space-y-4" id="chat-container">
+    <div class="flex-1 overflow-y-auto p-4 space-y-4" id="chat-container" data-autoscroll>
         @if(empty($messages))
             <div class="text-center text-concrete-500 mt-10">
                 <span class="tag-street tag-tilt bg-traffic-300 text-asphalt-950">Halo!</span>
@@ -19,7 +19,13 @@
             @foreach($messages as $msg)
                 <div class="flex {{ $msg['role'] === 'user' ? 'justify-end' : 'justify-start' }}">
                     <div class="max-w-[75%] p-3 rounded-lg {{ $msg['role'] === 'user' ? 'bg-spray-600 text-white border-2 border-asphalt-950 rounded-br-none shadow-sticker-sm' : 'bg-white text-asphalt-900 border-2 border-asphalt-950 rounded-bl-none shadow-sticker-sm' }}">
-                        <p class="whitespace-pre-wrap text-sm leading-relaxed">{{ $msg['content'] }}</p>
+                        @if($msg['role'] === 'assistant')
+                            <div class="prose prose-sm prose-slate max-w-none leading-relaxed">
+                                {!! \Illuminate\Support\Str::markdown($msg['content']) !!}
+                            </div>
+                        @else
+                            <p class="whitespace-pre-wrap text-sm leading-relaxed">{{ $msg['content'] }}</p>
+                        @endif
                     </div>
                 </div>
             @endforeach
