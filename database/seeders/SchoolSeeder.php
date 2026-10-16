@@ -20,7 +20,7 @@ class SchoolSeeder extends Seeder
         $guru = User::firstOrCreate(
             ['email' => 'guru@sekolah.id'],
             [
-                'name' => 'Pak Budi Pratama, S.Kom., M.T.',
+                'name' => 'Demo Guru',
                 'password' => Hash::make('password'),
                 'role' => 'guru',
                 'nis_nip' => '198507122010011005',
@@ -31,7 +31,7 @@ class SchoolSeeder extends Seeder
         $murid1 = User::firstOrCreate(
             ['email' => 'ahmad@sekolah.id'],
             [
-                'name' => 'Ahmad Rizky Pratama',
+                'name' => 'Demo Siswa',
                 'password' => Hash::make('password'),
                 'role' => 'murid',
                 'nis_nip' => '202411001',
@@ -149,20 +149,20 @@ class SchoolSeeder extends Seeder
             ]
         );
 
-        // 6. Buat Submission Contoh (Ahmad sudah mengerjakan)
+        // 6. Buat Submission Contoh (Demo Siswa sudah mengerjakan)
         Submission::firstOrCreate(
             [
                 'assignment_id' => $tugas1->id,
                 'student_id' => $murid1->id,
             ],
             [
-                'student_answers' => "Jawaban Tugas 1 - Ahmad Rizky:\n\n".
+                'student_answers' => "Jawaban Tugas 1 - Demo Siswa:\n\n".
                     "1. Alur request dimulai dari URL browser yang masuk ke web.php. Routing mencari Controller yang sesuai, Controller memanggil Model untuk mengambil data dari tabel database, lalu Model menyerahkan data ke Controller. Controller meneruskan data ke view Blade untuk ditampilkan kepada user.\n\n".
                     "2. Menaruh query langsung di View adalah kesalahan arsitektur karena membuat View berantakan dan sulit diuji. Seharusnya query ditaruh di Model atau Controller.\n\n".
                     '3. Eloquent ORM membuat koding lebih cepat, aman dari SQL injection, dan mudah dipahami karena menggunakan method OOP seperti Siswa::all().',
                 'status' => 'graded',
                 'score' => 95,
-                'feedback' => 'Penjelasan sangat sistematis dan pemahaman konsep MVC sangat baik! Pertahankan prestasi belajarmu, Ahmad.',
+                'feedback' => 'Penjelasan sangat sistematis dan pemahaman konsep MVC sangat baik! Pertahankan prestasi belajarmu, Demo Siswa.',
                 'submitted_at' => Carbon::now()->subDay(),
             ]
         );

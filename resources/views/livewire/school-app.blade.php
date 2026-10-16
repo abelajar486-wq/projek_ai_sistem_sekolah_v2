@@ -431,22 +431,26 @@
                                         <div class="text-xs text-slate-500">
                                             Pengumpulan: <strong class="text-slate-800">{{ $allSubs->count() }}</strong> / {{ $classStudents->count() }} Siswa
                                         </div>
-                                        <div class="flex items-center gap-2">
+                                        <div class="flex flex-wrap items-center gap-2">
                                             <button
                                                 wire:click="startAssignment({{ $assign->id }})"
                                                 class="text-xs font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-lg transition"
                                             >
                                                 Pratinjau Soal & Kunci
                                             </button>
-                                            @if($assign->isOverdue())
-                                                <button
-                                                    wire:click="deleteAssignment({{ $assign->id }})"
-                                                    wire:confirm="Hapus tugas '{{ $assign->title }}' yang telah lewat tenggat? Jawaban siswa yang terkumpul juga akan terhapus dan tindakan ini tidak dapat dibatalkan."
-                                                    class="text-xs font-medium text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 px-3 py-1.5 rounded-lg transition"
-                                                >
-                                                    Hapus
-                                                </button>
-                                            @endif
+                                            <button
+                                                wire:click="editAssignment({{ $assign->id }})"
+                                                class="text-xs font-medium text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 px-3 py-1.5 rounded-lg transition"
+                                            >
+                                                Edit
+                                            </button>
+                                            <button
+                                                wire:click="deleteAssignment({{ $assign->id }})"
+                                                wire:confirm="Hapus tugas '{{ $assign->title }}'? Jawaban siswa yang terkumpul juga akan terhapus dan tindakan ini tidak dapat dibatalkan."
+                                                class="text-xs font-medium text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 px-3 py-1.5 rounded-lg transition"
+                                            >
+                                                Hapus
+                                            </button>
                                         </div>
                                     @endif
                                 </div>
@@ -915,11 +919,17 @@
                             PDF
                         </a>
                     </div>
-                    <div class="flex items-center gap-2">
-                        @if($currentUser->role === 'guru' && $activeAssignment->isOverdue())
+                    <div class="flex flex-wrap items-center gap-2">
+                        @if($currentUser->role === 'guru')
+                            <button
+                                wire:click="editAssignment({{ $activeAssignment->id }})"
+                                class="btn-street bg-indigo-50 text-indigo-700 text-xs font-medium px-4 py-2"
+                            >
+                                Edit Tugas
+                            </button>
                             <button
                                 wire:click="deleteAssignment({{ $activeAssignment->id }})"
-                                wire:confirm="Hapus tugas '{{ $activeAssignment->title }}' yang telah lewat tenggat? Jawaban siswa yang terkumpul juga akan terhapus."
+                                wire:confirm="Hapus tugas '{{ $activeAssignment->title }}'? Jawaban siswa yang terkumpul juga akan terhapus."
                                 class="btn-street bg-rose-50 text-rose-700 text-xs font-medium px-4 py-2"
                             >
                                 Hapus Tugas
@@ -940,6 +950,78 @@
                         @endif
                     </div>
                 </div>
+            </div>
+        </div>
+    @endif
+
+    <!-- ========================================== -->
+    <!-- MODAL: EDIT TUGAS (GURU) -->
+    <!-- ========================================== -->
+    @if($showEditAssignmentModal)
+        <div class="fixed inset-0 z-50 overflow-y-auto bg-asphalt-950/70 backdrop-blur-sm flex items-center justify-center p-4">
+            <div class="sticker sticker-taped rounded-2xl max-w-2xl w-full p-6 space-y-4">
+                <div class="flex items-center justify-between border-b pb-3">
+                    <h3 class="text-sm font-bold text-slate-800">Edit Tugas</h3>
+                    <button wire:click="closeEditAssignmentModal" class="text-slate-400 hover:text-slate-600 text-sm font-semibold">Tutup</button>
+                </div>
+
+                <form wire:submit="updateAssignment" class="space-y-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Judul Tugas:</label>
+                        <input type="text" wire:model="editTitle" class="w-full text-xs p-2.5 border rounded-lg" placeholder="Contoh: Tugas AI: Pemahaman MVC">
+                        @error('editTitle') <span class="text-[11px] text-rose-600">{{ $message }}</span> @enderror
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1">Kategori / Topik:</label>
+                            <input type="text" wire:model="editTopic" class="w-full text-xs p-2.5 border rounded-lg" placeholder="Contoh: Pemrograman Web Lanjutan">
+                            @error('editTopic') <span class="text-[11px] text-rose-600">{{ $message }}</span> @enderror
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1">Kelas:</label>
+                            <select wire:model="editClassroomId" class="w-full text-xs p-2.5 border rounded-lg">
+                                @foreach($classrooms as $classroom)
+                                    <option value="{{ $classroom->id }}">{{ $classroom->name }}</option>
+                                @endforeach
+                            </select>
+                            @error('editClassroomId') <span class="text-[11px] text-rose-600">{{ $message }}</span> @enderror
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Batas Waktu (opsional):</label>
+                        <input type="date" wire:model="editDueDate" class="w-full text-xs p-2.5 border rounded-lg">
+                        @error('editDueDate') <span class="text-[11px] text-rose-600">{{ $message }}</span> @enderror
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Petunjuk Pengerjaan:</label>
+                        <textarea wire:model="editInstructions" rows="3" class="w-full text-xs p-2.5 border rounded-lg" placeholder="Petunjuk singkat untuk siswa"></textarea>
+                        @error('editInstructions') <span class="text-[11px] text-rose-600">{{ $message }}</span> @enderror
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Butir Soal (mendukung Markdown):</label>
+                        <textarea wire:model="editQuestionsContent" rows="6" class="w-full text-xs p-2.5 border rounded-lg font-sans" placeholder="1. ...&#10;2. ..."></textarea>
+                        @error('editQuestionsContent') <span class="text-[11px] text-rose-600">{{ $message }}</span> @enderror
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Kunci Jawaban & Rubrik (opsional):</label>
+                        <textarea wire:model="editAnswerKey" rows="4" class="w-full text-xs p-2.5 border rounded-lg font-sans" placeholder="Kunci jawaban untuk guru"></textarea>
+                        @error('editAnswerKey') <span class="text-[11px] text-rose-600">{{ $message }}</span> @enderror
+                    </div>
+
+                    <div class="flex items-center justify-end gap-2 pt-1">
+                        <button type="button" wire:click="closeEditAssignmentModal" class="btn-street bg-white text-asphalt-800 text-xs font-medium px-4 py-2">
+                            Batal
+                        </button>
+                        <button type="submit" class="btn-street bg-spray-600 text-white font-semibold text-xs px-4 py-2">
+                            Simpan Perubahan
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
     @endif

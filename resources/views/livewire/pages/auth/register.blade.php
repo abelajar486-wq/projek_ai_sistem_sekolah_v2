@@ -54,7 +54,7 @@ new #[Layout('layouts.guest')] class extends Component
                     class="role-card {{ $role === 'murid' ? 'role-card-active' : '' }}"
                 >
                     <input
-                        wire:model="role"
+                        wire:model.live="role"
                         id="role-murid"
                         type="radio"
                         name="role"
@@ -71,7 +71,7 @@ new #[Layout('layouts.guest')] class extends Component
                     class="role-card {{ $role === 'guru' ? 'role-card-active' : '' }}"
                 >
                     <input
-                        wire:model="role"
+                        wire:model.live="role"
                         id="role-guru"
                         type="radio"
                         name="role"
@@ -89,21 +89,21 @@ new #[Layout('layouts.guest')] class extends Component
         <!-- Name -->
         <div>
             <x-input-label for="name" :value="__('Nama Lengkap')" />
-            <x-text-input wire:model="name" id="name" class="block mt-1 w-full" type="text" name="name" required autofocus autocomplete="name" placeholder="Ahmad Rizky Pratama" />
+            <x-text-input wire:model="name" id="name" class="block mt-1 w-full" type="text" name="name" required autofocus autocomplete="name" placeholder="Nama lengkap anda" />
             <x-input-error :messages="$errors->get('name')" class="mt-2" />
         </div>
 
         <!-- NIS / NIP -->
         <div>
             <x-input-label for="nis_nip" :value="__('NIS / NIP (Opsional)')" />
-            <x-text-input wire:model="nis_nip" id="nis_nip" class="block mt-1 w-full" type="text" name="nis_nip" autocomplete="off" placeholder="202411001" />
+            <x-text-input wire:model="nis_nip" id="nis_nip" class="block mt-1 w-full" type="text" name="nis_nip" autocomplete="off" placeholder="NIS / NIP anda" />
             <x-input-error :messages="$errors->get('nis_nip')" class="mt-2" />
         </div>
 
         <!-- Email Address -->
         <div>
             <x-input-label for="email" :value="__('Email')" />
-            <x-text-input wire:model="email" id="email" class="block mt-1 w-full" type="email" name="email" required autocomplete="username" placeholder="nama@sekolah.id" />
+            <x-text-input wire:model="email" id="email" class="block mt-1 w-full" type="email" name="email" required autocomplete="username" placeholder="Email sekolah anda" />
             <x-input-error :messages="$errors->get('email')" class="mt-2" />
         </div>
 
@@ -114,7 +114,7 @@ new #[Layout('layouts.guest')] class extends Component
             <x-text-input wire:model="password" id="password" class="block mt-1 w-full"
                             type="password"
                             name="password"
-                            required autocomplete="new-password" />
+                            required autocomplete="new-password" placeholder="Password anda" />
 
             <x-input-error :messages="$errors->get('password')" class="mt-2" />
         </div>
@@ -122,10 +122,9 @@ new #[Layout('layouts.guest')] class extends Component
         <!-- Confirm Password -->
         <div>
             <x-input-label for="password_confirmation" :value="__('Ulangi Password')" />
-
             <x-text-input wire:model="password_confirmation" id="password_confirmation" class="block mt-1 w-full"
                             type="password"
-                            name="password_confirmation" required autocomplete="new-password" />
+                            name="password_confirmation" required autocomplete="new-password" placeholder="Ulangi password anda" />
             <x-input-error :messages="$errors->get('password_confirmation')" class="mt-2" />
         </div>
 

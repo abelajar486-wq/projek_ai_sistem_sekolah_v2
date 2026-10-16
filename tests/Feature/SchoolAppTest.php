@@ -163,7 +163,7 @@ test('guru dapat menghapus tugas yang sudah lewat tenggat', function () {
     expect(Assignment::find($overdue->id))->toBeNull();
 });
 
-test('guru tidak dapat menghapus tugas yang belum lewat tenggat', function () {
+test('guru dapat menghapus tugas yang belum lewat tenggat', function () {
     $this->actingAs($this->guru);
 
     $aktif = Assignment::create([
@@ -178,9 +178,59 @@ test('guru tidak dapat menghapus tugas yang belum lewat tenggat', function () {
 
     Livewire::test(SchoolApp::class)
         ->call('deleteAssignment', $aktif->id)
+        ->assertSet('flashType', 'success');
+
+    expect(Assignment::find($aktif->id))->toBeNull();
+});
+
+test('guru dapat mengubah data tugas', function () {
+    $this->actingAs($this->guru);
+
+    $tugas = Assignment::create([
+        'classroom_id' => $this->classroom->id,
+        'teacher_id' => $this->guru->id,
+        'title' => 'Tugas Awal',
+        'topic' => 'Umum',
+        'questions_content' => '1. Jelaskan proses fotosintesis.',
+        'due_date' => Carbon::today()->addDays(3)->toDateString(),
+        'status' => 'published',
+    ]);
+
+    Livewire::test(SchoolApp::class)
+        ->call('editAssignment', $tugas->id)
+        ->assertSet('showEditAssignmentModal', true)
+        ->assertSet('editTitle', 'Tugas Awal')
+        ->set('editTitle', 'Tugas Direvisi')
+        ->set('editTopic', 'Revisi Topik')
+        ->call('updateAssignment')
+        ->assertSet('showEditAssignmentModal', false)
+        ->assertSet('flashType', 'success');
+
+    $tugas->refresh();
+
+    expect($tugas->title)->toBe('Tugas Direvisi');
+    expect($tugas->topic)->toBe('Revisi Topik');
+});
+
+test('murid tidak dapat mengubah tugas', function () {
+    $this->actingAs($this->murid);
+
+    $tugas = Assignment::create([
+        'classroom_id' => $this->classroom->id,
+        'teacher_id' => $this->guru->id,
+        'title' => 'Tugas Masih Aktif',
+        'topic' => 'Umum',
+        'questions_content' => '1. Jelaskan proses fotosintesis.',
+        'due_date' => Carbon::today()->addDays(3)->toDateString(),
+        'status' => 'published',
+    ]);
+
+    Livewire::test(SchoolApp::class)
+        ->call('editAssignment', $tugas->id)
+        ->assertSet('showEditAssignmentModal', false)
         ->assertSet('flashType', 'error');
 
-    expect(Assignment::find($aktif->id))->not->toBeNull();
+    expect($tugas->fresh()->title)->toBe('Tugas Masih Aktif');
 });
 
 test('murid tidak dapat menghapus tugas', function () {

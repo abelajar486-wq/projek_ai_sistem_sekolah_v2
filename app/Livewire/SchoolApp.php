@@ -64,6 +64,25 @@ class SchoolApp extends Component
 
     public bool $showAssignmentModal = false;
 
+    // Guru: Edit Tugas
+    public ?int $editingAssignmentId = null;
+
+    public string $editTitle = '';
+
+    public string $editTopic = '';
+
+    public ?int $editClassroomId = null;
+
+    public string $editInstructions = '';
+
+    public string $editQuestionsContent = '';
+
+    public string $editAnswerKey = '';
+
+    public string $editDueDate = '';
+
+    public bool $showEditAssignmentModal = false;
+
     // Guru: Penilaian Submission
     public ?int $activeSubmissionId = null;
 
@@ -395,7 +414,7 @@ class SchoolApp extends Component
     }
 
     /**
-     * Hapus tugas yang sudah melewati tanggal tenggat (khusus guru).
+     * Hapus tugas beserta jawaban siswa yang terkumpul (khusus guru).
      */
     public function deleteAssignment(int $assignmentId)
     {
@@ -411,12 +430,6 @@ class SchoolApp extends Component
             return;
         }
 
-        if (! $assignment->isOverdue()) {
-            $this->notify('Hanya tugas yang sudah melewati tanggal tenggat yang dapat dihapus.', 'error');
-
-            return;
-        }
-
         $assignment->delete();
 
         if ($this->activeAssignmentId === $assignmentId) {
@@ -424,7 +437,86 @@ class SchoolApp extends Component
             $this->activeAssignmentId = null;
         }
 
-        $this->notify('Tugas yang telah lewat tenggat berhasil dihapus.', 'success');
+        if ($this->editingAssignmentId === $assignmentId) {
+            $this->showEditAssignmentModal = false;
+            $this->editingAssignmentId = null;
+        }
+
+        $this->notify('Tugas berhasil dihapus.', 'success');
+    }
+
+    /**
+     * Buka form edit tugas (khusus guru).
+     */
+    public function editAssignment(int $assignmentId)
+    {
+        if (! $this->authorizeGuru()) {
+            return;
+        }
+
+        $assignment = Assignment::find($assignmentId);
+
+        if (! $assignment) {
+            $this->notify('Tugas tidak ditemukan.', 'error');
+
+            return;
+        }
+
+        $this->editingAssignmentId = $assignment->id;
+        $this->editTitle = $assignment->title;
+        $this->editTopic = $assignment->topic ?? '';
+        $this->editClassroomId = $assignment->classroom_id;
+        $this->editInstructions = $assignment->instructions ?? '';
+        $this->editQuestionsContent = $assignment->questions_content ?? '';
+        $this->editAnswerKey = $assignment->answer_key ?? '';
+        $this->editDueDate = $assignment->due_date ? $assignment->due_date->toDateString() : '';
+        $this->showEditAssignmentModal = true;
+    }
+
+    public function updateAssignment()
+    {
+        if (! $this->authorizeGuru()) {
+            return;
+        }
+
+        $validated = $this->validate([
+            'editTitle' => ['required', 'string', 'max:255'],
+            'editTopic' => ['nullable', 'string', 'max:255'],
+            'editClassroomId' => ['required', 'exists:classrooms,id'],
+            'editInstructions' => ['nullable', 'string'],
+            'editQuestionsContent' => ['required', 'string'],
+            'editAnswerKey' => ['nullable', 'string'],
+            'editDueDate' => ['nullable', 'date'],
+        ]);
+
+        $assignment = Assignment::find($this->editingAssignmentId);
+
+        if (! $assignment) {
+            $this->notify('Tugas tidak ditemukan.', 'error');
+
+            return;
+        }
+
+        $assignment->update([
+            'classroom_id' => $validated['editClassroomId'],
+            'title' => $validated['editTitle'],
+            'topic' => $validated['editTopic'] ?: 'Umum',
+            'instructions' => $validated['editInstructions'],
+            'questions_content' => $validated['editQuestionsContent'],
+            'answer_key' => $validated['editAnswerKey'],
+            'due_date' => $validated['editDueDate'] ?: null,
+        ]);
+
+        $this->showEditAssignmentModal = false;
+        $this->editingAssignmentId = null;
+
+        $this->notify("Tugas '{$assignment->title}' berhasil diperbarui.", 'success');
+    }
+
+    public function closeEditAssignmentModal()
+    {
+        $this->showEditAssignmentModal = false;
+        $this->editingAssignmentId = null;
     }
 
     // ==================== PENILAIAN GURU ====================

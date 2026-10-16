@@ -88,14 +88,16 @@ new #[Layout('layouts.guest')] class extends Component
 
             <div class="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                 @foreach (config('demo.accounts') as $role => $account)
-                    <form method="POST" action="{{ route('demo.login', $role) }}">
+                    <form method="POST" action="{{ route('demo.login', $role) }}" class="flex">
                         @csrf
                         <button
                             type="submit"
-                            class="btn-street {{ $role === 'guru' ? 'btn-spray' : 'btn-asphalt' }} w-full px-4 py-2.5 rounded-lg text-left"
+                            class="btn-street {{ $role === 'guru' ? 'btn-spray' : 'btn-asphalt' }} w-full h-full px-4 py-2.5 rounded-lg"
                         >
-                            <span class="font-display text-xs uppercase tracking-[0.12em]">{{ $account['label'] }}</span>
-                            <span class="block text-[10px] font-sans font-normal normal-case tracking-normal opacity-80">{{ $account['description'] }}</span>
+                            <span class="flex flex-col items-start text-left w-full">
+                                <span class="font-display text-xs uppercase tracking-[0.12em]">{{ $account['label'] }}</span>
+                                <span class="block text-[10px] font-sans font-normal normal-case tracking-normal opacity-80">{{ $account['description'] }}</span>
+                            </span>
                         </button>
                     </form>
                 @endforeach
